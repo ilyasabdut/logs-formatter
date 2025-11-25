@@ -1,0 +1,22 @@
+# SvelteKit build artifacts
+.svelte-kit/
+build/
+
+# Dependencies
+node_modules/
+
+# Bun
+bun.lockb
+
+# General
+.env
+.env.*
+!.env.example
+
+# IDE/OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+.claude

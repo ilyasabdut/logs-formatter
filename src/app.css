@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	body {
+		@apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+	}
+}
+
+@layer components {
+	.textarea-custom {
+		@apply w-full p-4 border border-gray-300 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+		@apply dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:focus:ring-blue-400;
+	}
+
+	.btn-primary {
+		@apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+		@apply dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400 dark:focus:ring-offset-gray-900;
+	}
+
+	.btn-secondary {
+		@apply px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+		@apply dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-gray-400 dark:focus:ring-offset-gray-900;
+	}
+
+	.select-custom {
+		@apply px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+		@apply dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:focus:ring-blue-400;
+	}
+}

@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  log-formatter-web:
+    image: registry.ilyasabdut.loseyourip.com/log-formatter:latest
+    container_name: log-formatter
+    restart: always
+    ports:
+      - "8085:80"
+
+networks:
+  default:
+    external: true
+    name: nginx_default
