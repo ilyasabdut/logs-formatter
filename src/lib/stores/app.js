@@ -6,7 +6,7 @@ export const outputLogs = writable('');
 
 // User selections
 export const logType = writable('auto'); // 'auto', 'json', 'apache', 'nginx', 'kubernetes', 'plain'
-export const outputFormat = writable('auto'); // 'auto', 'jsonlines', 'keyvalue', 'compact'
+export const outputFormat = writable('auto'); // 'auto', 'jsonlines', 'keyvalue', 'compact', 'toon'
 
 // UI state
 export const isProcessing = writable(false);

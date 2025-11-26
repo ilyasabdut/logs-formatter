@@ -4,6 +4,22 @@
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		
+		<!-- Prevent theme flash by setting initial theme before app loads -->
+		<script>
+			(function() {
+				const stored = localStorage.getItem('theme');
+				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				const theme = stored || (prefersDark ? 'dark' : 'light');
+				
+				if (theme === 'dark') {
+					document.documentElement.classList.add('dark');
+				} else {
+					document.documentElement.classList.remove('dark');
+				}
+			})();
+		</script>
+		
 		<script defer src="https://umami.ilyasabdut.loseyourip.com/script.js" data-website-id="3455951c-8eb8-4ea9-acfb-6ce0c76643b6"></script>
 		%sveltekit.head%
 	</head>

@@ -27,6 +27,23 @@ Use these examples to test the application:
 {"ts":"2024-01-15T10:00:02Z","level":"INFO","msg":"Request completed","status":200,"req_id":"abc-123"}
 ```
 
+## TOON Format Example (LLM-Optimized) ⭐
+
+The same JSON Lines data above can be converted to TOON format:
+
+```toon
+[3]{ts,level,msg,req_id,duration_ms,status}:
+  2024-01-15T10:00:00Z,INFO,Request started,abc-123,,
+  2024-01-15T10:00:01Z,INFO,Database query,abc-123,45,
+  2024-01-15T10:00:02Z,INFO,Request completed,abc-123,,200
+```
+
+**Benefits of TOON:**
+- 🚀 **~40% fewer tokens** than standard JSON
+- 📊 **Schema-aware**: Explicit field headers help LLMs parse correctly
+- 🎯 **74% accuracy** vs 70% for JSON in comprehension tests
+- 📈 **Tabular format**: Perfect for uniform object arrays
+
 ## Apache Log Example
 
 ```
@@ -98,3 +115,68 @@ Output:
 {"ts":"2024-01-15 10:30:00","lvl":"INFO","data":{"port":"8080","env":"production"},"msg":"Starting application server"}
 {"ts":"2024-01-15 10:30:01","lvl":"INFO","data":{"host":"db.example.com"},"msg":"Database connection established"}
 ```
+
+## TOON Format Examples ⭐
+
+### Uniform Array to TOON (Best Case)
+**Input:** JSON Lines logs
+```json
+{"timestamp":"2024-01-15T10:00:00Z","level":"INFO","message":"Request started","duration":45}
+{"timestamp":"2024-01-15T10:00:01Z","level":"WARN","message":"Slow query detected","duration":1523}
+{"timestamp":"2024-01-15T10:00:02Z","level":"ERROR","message":"Database timeout","duration":5000}
+```
+
+**TOON Output:** Schema-aware tabular format
+```toon
+[3]{timestamp,level,message,duration}:
+  2024-01-15T10:00:00Z,INFO,Request started,45
+  2024-01-15T10:00:01Z,WARN,Slow query detected,1523
+  2024-01-15T10:00:02Z,ERROR,Database timeout,5000
+```
+
+### Nested Object to TOON
+**Input:** JSON object with nested structure
+```json
+{
+  "service": "api-server",
+  "instance": "prod-1",
+  "metrics": {
+    "requests": 1000,
+    "errors": 5,
+    "latency_p95": 120
+  }
+}
+```
+
+**TOON Output:**
+```toon
+service: api-server
+instance: prod-1
+metrics:
+  requests: 1000
+  errors: 5
+  latency_p95: 120
+```
+
+### When TOON Excels vs Other Formats
+
+| Format | Tokens | Accuracy | Best For |
+|--------|--------|----------|----------|
+| JSON (standard) | 4,545 | 69.7% | Complex nested data |
+| JSON (compact) | 3,081 | 70.7% | API responses |
+| **TOON** | **2,744** | **73.9%** | **Uniform object arrays** |
+| CSV | 2,352 | 72.0% | Pure tabular data |
+
+**Token Savings Example:**
+- Original JSON: `{"level":"info","message":"Server started","timestamp":"2024-01-01T10:00:00Z","port":8080}` (78 chars)
+- TOON Output: `level,message,timestamp,port:\n info,Server started,2024-01-01T10:00:00Z,8080` (67 chars)
+- **Savings: 14% fewer characters**
+
+### Testing TOON in the App
+
+1. Select **"TOON (LLM-Optimized) ⭐"** in the Output Format dropdown
+2. Use any of the JSON or JSON Lines examples above
+3. Compare the compression ratio in the metrics display
+4. Notice the schema-aware structure with field headers
+
+**Pro Tip:** TOON works best with uniform object arrays (same fields across all objects). For mixed or deeply nested data, the app will fall back to standard TOON encoding or other formats automatically.

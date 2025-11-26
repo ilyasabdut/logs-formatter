@@ -3,26 +3,40 @@ import { browser } from '$app/environment';
 
 /**
  * Get initial theme from localStorage or system preference
+ * Uses the same logic as the HTML script for consistency
  */
 function getInitialTheme() {
 	if (!browser) return 'light';
 
 	const stored = localStorage.getItem('theme');
-	if (stored) return stored;
+	const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+	
+	return stored || (prefersDark ? 'dark' : 'light');
+}
 
-	// Check system preference
-	if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-		return 'dark';
+/**
+ * Apply theme to document immediately
+ */
+function applyTheme(themeValue) {
+	if (!browser) return;
+	
+	if (themeValue === 'dark') {
+		document.documentElement.classList.add('dark');
+	} else {
+		document.documentElement.classList.remove('dark');
 	}
-
-	return 'light';
 }
 
 /**
  * Theme store with localStorage persistence
  */
 function createThemeStore() {
-	const { subscribe, set, update } = writable(getInitialTheme());
+	const initialTheme = getInitialTheme();
+	
+	// Apply theme immediately to prevent FOUC
+	applyTheme(initialTheme);
+	
+	const { subscribe, set, update } = writable(initialTheme);
 
 	return {
 		subscribe,
@@ -30,11 +44,7 @@ function createThemeStore() {
 			if (browser) {
 				localStorage.setItem('theme', value);
 				// Update document class
-				if (value === 'dark') {
-					document.documentElement.classList.add('dark');
-				} else {
-					document.documentElement.classList.remove('dark');
-				}
+				applyTheme(value);
 			}
 			set(value);
 		},
@@ -44,11 +54,7 @@ function createThemeStore() {
 				if (browser) {
 					localStorage.setItem('theme', newTheme);
 					// Update document class
-					if (newTheme === 'dark') {
-						document.documentElement.classList.add('dark');
-					} else {
-						document.documentElement.classList.remove('dark');
-					}
+					applyTheme(newTheme);
 				}
 				return newTheme;
 			});
