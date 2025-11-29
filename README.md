@@ -171,8 +171,6 @@ Status:       Running
 
 ## Implementation Details
 
-### Objective
-
 To create a fast, client-side web application that takes various log formats as input, intelligently parses them, and outputs a highly compact, clean, and structured representation optimized for LLM consumption. The platform prioritizes minimal character count while preserving semantic meaning.
 
 ### Architecture
@@ -327,6 +325,13 @@ Auto Mode: ✅ Correctly selected TOON as optimal format
    - Download button for formatted output
    - Batch processing (multiple file uploads)
    - Presets for common log types (Docker, Kubernetes, AWS CloudWatch, Datadog)
+
+4. **Beautified JSON with Collapsible Formatting** (IN DEVELOPMENT):
+   - Pretty-printed JSON with proper indentation
+   - Interactive collapsible sections with click-to-expand/collapse
+   - Syntax highlighting (strings in green, numbers in blue, etc.)
+   - Smart auto-collapse for large objects
+   - Visual indicators with expand (▶) and collapse (▼) arrows
 
 ### Priority: Low
 4. **UX Enhancements**:

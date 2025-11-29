@@ -19,6 +19,91 @@ Use these examples to test the application:
 }
 ```
 
+## Deeply Nested JSON Example (For Beautified JSON Testing)
+
+Perfect for testing the **Beautified JSON ⭐** collapsible feature with syntax highlighting!
+
+```json
+{
+  "user": {
+    "id": 12345,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "active": true,
+    "role": null,
+    "profile": {
+      "avatar": "https://example.com/avatar.jpg",
+      "bio": "Software developer",
+      "location": {
+        "city": "San Francisco",
+        "state": "CA",
+        "country": "USA",
+        "coordinates": {
+          "lat": 37.7749,
+          "lng": -122.4194
+        }
+      }
+    }
+  },
+  "orders": [
+    {
+      "id": "ORD-001",
+      "total": 299.99,
+      "items": [
+        {
+          "product": "Laptop",
+          "price": 999.99,
+          "quantity": 1
+        },
+        {
+          "product": "Mouse",
+          "price": 29.99,
+          "quantity": 2
+        }
+      ],
+      "shipping": {
+        "address": "123 Main St",
+        "city": "New York",
+        "tracking": {
+          "number": "TRK123456",
+          "status": "delivered",
+          "updates": [
+            {"time": "2025-01-01T10:00:00Z", "event": "shipped"},
+            {"time": "2025-01-02T14:30:00Z", "event": "in_transit"},
+            {"time": "2025-01-03T09:15:00Z", "event": "delivered"}
+          ]
+        }
+      }
+    }
+  ],
+  "settings": {
+    "notifications": {
+      "email": true,
+      "sms": false,
+      "push": true,
+      "preferences": {
+        "marketing": false,
+        "updates": true,
+        "security": true
+      }
+    },
+    "privacy": {
+      "public_profile": false,
+      "show_email": false
+    }
+  }
+}
+```
+
+**Features to test:**
+- ✅ 4-5 levels of nesting
+- ✅ Arrays with nested objects
+- ✅ All value types: strings, numbers, booleans, null
+- ✅ Auto-collapse on large objects (orders)
+- ✅ Auto-expand on small objects (coordinates)
+- ✅ Syntax highlighting: strings (green), numbers (blue), booleans (orange), null (gray), keys (red)
+- ✅ Click to expand/collapse each level
+
 ## JSON Lines Example
 
 ```json

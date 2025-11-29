@@ -1,9 +1,11 @@
 <script>
 	import { outputLogs, inputLogs } from '$lib/stores/app.js';
 	import MetricsDisplay from '$lib/components/MetricsDisplay.svelte';
+	import JsonNode from '$lib/components/JsonNode.svelte';
 
 	let copyButtonText = 'Copy to Clipboard';
 	let copyTimeout;
+	let parsedData = null;
 
 	/**
 	 * Copy output to clipboard
@@ -12,7 +14,9 @@
 		if (!$outputLogs) return;
 
 		try {
-			await navigator.clipboard.writeText($outputLogs);
+			// Handle both string and object cases
+			const textToCopy = typeof $outputLogs === 'object' ? JSON.stringify($outputLogs, null, 2) : $outputLogs;
+			await navigator.clipboard.writeText(textToCopy);
 			copyButtonText = 'Copied!';
 
 			if (copyTimeout) clearTimeout(copyTimeout);
@@ -26,6 +30,36 @@
 			}, 2000);
 		}
 	}
+
+	/**
+	 * Check if output is a JSON object (for collapsible view)
+	 * Accepts both objects and arrays
+	 */
+	function isPrettyJSON(output) {
+		return output && typeof output === 'object';
+	}
+
+	/**
+	 * Parse JSON data for collapsible display
+	 * Returns the data as-is if it's an object or array
+	 */
+	function parseJSONData(output) {
+		if (output && typeof output === 'object') {
+			return output;
+		}
+		return null;
+	}
+
+	/**
+	 * Watch for output changes and parse JSON data
+	 */
+	$: {
+		if ($outputLogs && isPrettyJSON($outputLogs)) {
+			parsedData = parseJSONData($outputLogs);
+		} else {
+			parsedData = null;
+		}
+	}
 </script>
 
 <div class="relative">
@@ -34,6 +68,18 @@
 			<div class="flex items-center space-x-2">
 				<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
 				<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Formatted Output Ready</span>
+				{#if parsedData}
+					<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+						<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+						</svg>
+						Collapsible JSON
+					</span>
+				{:else if isPrettyJSON($outputLogs)}
+					<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+						Beautified JSON
+					</span>
+				{/if}
 			</div>
 			<button
 				type="button"
@@ -60,10 +106,22 @@
 	{/if}
 
 	<div class="relative">
-		<textarea
-			value={$outputLogs}
-			readonly
-			placeholder="Formatted logs will appear here...
+		{#if parsedData}
+			<!-- Collapsible JSON View -->
+			<div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 max-h-[450px] overflow-y-auto">
+				<div class="font-mono text-sm">
+					<JsonNode data={parsedData} />
+				</div>
+				<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
+					💡 Click on brackets and objects to expand/collapse sections
+				</div>
+			</div>
+		{:else if $outputLogs && typeof $outputLogs === 'string'}
+			<!-- Regular Text View (only for strings) -->
+			<textarea
+				value={$outputLogs}
+				readonly
+				placeholder="Formatted logs will appear here...
 
 Features:
 • Automatic format detection
@@ -72,10 +130,33 @@ Features:
 • Real-time statistics
 
 Simply input your logs above and click 'Transform Logs' to see the optimized output here."
-			class="w-full h-[450px] px-4 py-3 border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg resize-none focus:ring-0 focus:outline-none cursor-text font-mono text-sm leading-relaxed transition-all duration-200"
-			aria-label="Output logs textarea"
-		/>
-</div>
+				class="w-full h-[450px] px-4 py-3 border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg resize-none focus:ring-0 focus:outline-none cursor-text font-mono text-sm leading-relaxed transition-all duration-200"
+				aria-label="Output logs textarea"
+			/>
+		{:else if $outputLogs && typeof $outputLogs === 'object'}
+			<!-- Object fallback - shouldn't happen but just in case -->
+			<div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 max-h-[450px] overflow-y-auto">
+				<pre class="font-mono text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{JSON.stringify($outputLogs, null, 2)}</pre>
+			</div>
+		{:else}
+			<!-- Empty State -->
+			<textarea
+				value=""
+				readonly
+				placeholder="Formatted logs will appear here...
+
+Features:
+• Automatic format detection
+• Smart compression optimization
+• TOON format for LLMs
+• Real-time statistics
+
+Simply input your logs above and click 'Transform Logs' to see the optimized output here."
+				class="w-full h-[450px] px-4 py-3 border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg resize-none focus:ring-0 focus:outline-none cursor-text font-mono text-sm leading-relaxed transition-all duration-200"
+				aria-label="Output logs textarea"
+			/>
+		{/if}
+	</div>
 
 	<!-- Output Metrics with Compression Stats -->
 	<div class="mt-4">

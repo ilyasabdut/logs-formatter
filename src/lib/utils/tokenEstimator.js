@@ -38,8 +38,8 @@ export function estimateTokens(text) {
 }
 
 /**
- * Calculate metrics for text
- * @param {string} text - Input text
+ * Calculate metrics for text or object
+ * @param {string|object} text - Input text or object (for beautified JSON)
  * @returns {Object} - Metrics object with chars, lines, and tokens
  */
 export function calculateMetrics(text) {
@@ -51,10 +51,16 @@ export function calculateMetrics(text) {
 		};
 	}
 
+	// If text is an object (beautified JSON), stringify it for metrics calculation
+	let textStr = text;
+	if (typeof text === 'object') {
+		textStr = JSON.stringify(text, null, 2);
+	}
+
 	return {
-		chars: text.length,
-		lines: text.split('\n').length,
-		tokens: estimateTokens(text)
+		chars: textStr.length,
+		lines: textStr.split('\n').length,
+		tokens: estimateTokens(textStr)
 	};
 }
 

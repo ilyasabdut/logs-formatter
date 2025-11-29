@@ -14,7 +14,8 @@
 			'toon': 'TOON (LLM-Optimized)',
 			'jsonlines': 'JSON Lines',
 			'keyvalue': 'Key-Value Lines',
-			'compact': 'Compact JSON'
+			'compact': 'Compact JSON',
+			'pretty': 'Beautified JSON'
 		};
 		return formatMap[format] || format;
 	}
@@ -128,6 +129,7 @@
 				<option value="jsonlines">JSON Lines</option>
 				<option value="keyvalue">Key-Value Lines</option>
 				<option value="compact">Compact JSON</option>
+				<option value="pretty">Beautified JSON ⭐</option>
 			</select>
 			<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
 				<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

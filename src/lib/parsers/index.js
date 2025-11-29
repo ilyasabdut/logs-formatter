@@ -73,7 +73,8 @@ export function formatLogs(text, logType = 'auto', outputFormat = 'auto') {
  */
 function calculateCompression(original, formatted) {
 	const originalSize = original.length;
-	const formattedSize = formatted.length;
+	// Handle case where formatted might be an object (for pretty format)
+	const formattedSize = typeof formatted === 'object' ? JSON.stringify(formatted).length : formatted.length;
 	return ((originalSize - formattedSize) / originalSize) * 100;
 }
 
@@ -121,12 +122,36 @@ function formatToToon(text, detectedType) {
 }
 
 /**
+ * Remove JSON comments (both // and /* style) from text
+ * This is a simplified approach that works for most cases
+ * Note: For complex JSON with URLs, we skip comment stripping if it would break the JSON
+ */
+function stripComments(text) {
+	// First, try parsing without stripping - most JSON doesn't have comments
+	try {
+		JSON.parse(text);
+		// If it parses successfully, don't strip comments (might contain URLs like https://)
+		return text;
+	} catch (e) {
+		// Only strip comments if parsing failed
+		// This regex only matches // at the start of a line (after whitespace) to avoid matching URLs
+		let cleaned = text.replace(/^\s*\/\/.*$/gm, '');
+
+		// Remove multi-line comments (/* comment */)
+		cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+
+		return cleaned;
+	}
+}
+
+/**
  * Parse JSON text to structured data
  */
 function parseToStructuredJSON(text) {
 	try {
-		// Try parsing as single JSON object/array
-		return JSON.parse(text);
+		// First, try to strip comments and parse
+		const cleanedText = stripComments(text);
+		return JSON.parse(cleanedText);
 	} catch {
 		// Try parsing as JSON Lines (one object per line)
 		const lines = text.trim().split('\n');
@@ -137,7 +162,9 @@ function parseToStructuredJSON(text) {
 			if (!trimmed) continue;
 
 			try {
-				const obj = JSON.parse(trimmed);
+				// Try parsing each line after stripping comments
+				const cleanedLine = stripComments(trimmed);
+				const obj = JSON.parse(cleanedLine);
 				objects.push(obj);
 			} catch {
 				// Skip invalid lines
@@ -162,6 +189,11 @@ function parseToStructuredWebServer(text) {
 	for (const line of lines) {
 		const trimmed = line.trim();
 		if (!trimmed) continue;
+
+		// Skip comment lines
+		if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
+			continue;
+		}
 
 		// Simple regex for Apache/Nginx log format
 		const logPattern = /^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+"([^"]+)"\s+(\d+)\s+(\S+)/;
@@ -192,6 +224,11 @@ function parseToStructuredKubernetes(text) {
 		const trimmed = line.trim();
 		if (!trimmed) continue;
 
+		// Skip comment lines
+		if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
+			continue;
+		}
+
 		// Match key-value pairs like "Name:         my-pod"
 		const kvPattern = /^([^:]+):\s*(.+)$/;
 		const match = trimmed.match(kvPattern);
@@ -216,6 +253,11 @@ function parseToStructuredPlain(text) {
 	for (const line of lines) {
 		const trimmed = line.trim();
 		if (!trimmed) continue;
+
+		// Skip comment lines
+		if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
+			continue;
+		}
 
 		// Simple pattern matching for common log formats
 		// Try to extract timestamp, level, and message
@@ -276,6 +318,7 @@ function autoFormat(text, detectedType) {
 	}
 
 	// Test all formats and calculate compression ratios
+	// Note: 'pretty' format is excluded - it's for readability, not compression
 	const formats = [
 		{ name: 'jsonlines', displayName: 'JSON Lines', getOutput: () => formatAsJSONLines(structuredData) },
 		{ name: 'compact', displayName: 'Compact JSON', getOutput: () => formatAsCompact(structuredData) },
@@ -386,64 +429,150 @@ function formatAsKeyValue(data) {
 }
 
 /**
+ * Format data as Pretty/Beautified JSON
+ * Note: Does NOT compact or filter fields - shows all data for human readability
+ */
+function formatAsPretty(data) {
+	try {
+		// For beautified format, we want to preserve ALL fields (no compacting/filtering)
+		// This is different from other formats which optimize for compression
+
+		if (data === null || data === undefined) {
+			return {};
+		}
+
+		// If it's already a valid object/array, return as-is
+		if (typeof data === 'object') {
+			return data;
+		}
+
+		// For primitive values, wrap in an object
+		return { value: data };
+	} catch (error) {
+		console.error('Error formatting as pretty JSON:', error);
+		// Fallback to empty object
+		return {};
+	}
+}
+
+/**
+ * Beautify JSON with proper indentation
+ */
+function beautifyJSON(obj, currentIndent = 0) {
+	// Handle null, undefined, and non-object types
+	if (obj === null || obj === undefined) {
+		return 'null';
+	}
+	if (typeof obj !== 'object') {
+		return JSON.stringify(obj);
+	}
+
+	// Handle arrays
+	if (Array.isArray(obj)) {
+		if (obj.length === 0) return '[]';
+
+		try {
+			const elements = obj.map(item => {
+				const indented = beautifyJSON(item, currentIndent + 2);
+				return ' '.repeat(currentIndent + 2) + indented;
+			});
+
+			return '[\n' + elements.join(',\n') + '\n' + ' '.repeat(currentIndent) + ']';
+		} catch (error) {
+			console.error('Error beautifying array:', error);
+			return JSON.stringify(obj);
+		}
+	}
+
+	// Handle objects
+	try {
+		const keys = Object.keys(obj);
+		if (keys.length === 0) return '{}';
+
+		const properties = keys.map(key => {
+			const value = beautifyJSON(obj[key], currentIndent + 2);
+			return ' '.repeat(currentIndent + 2) + `"${key}": ${value}`;
+		});
+
+		return '{\n' + properties.join(',\n') + '\n' + ' '.repeat(currentIndent) + '}';
+	} catch (error) {
+		console.error('Error beautifying object:', error);
+		return JSON.stringify(obj);
+	}
+}
+
+/**
  * Compact object for JSON formatting (separate from TOON-specific compaction)
  */
 function compactObjectForJSON(obj) {
-	if (obj === null || obj === undefined) return null;
-	if (typeof obj !== 'object') return obj;
+	try {
+		if (obj === null || obj === undefined) return null;
+		if (typeof obj !== 'object') return obj;
 
-	if (Array.isArray(obj)) {
-		return obj.map(compactObjectForJSON).filter(item => item !== null && item !== undefined);
-	}
+		if (Array.isArray(obj)) {
+			const filteredArray = obj
+				.map(item => compactObjectForJSON(item))
+				.filter(item => item !== null && item !== undefined);
 
-	const result = {};
-	const keyShortcuts = {
-		timestamp: 'ts',
-		message: 'msg',
-		level: 'lvl',
-		severity: 'sev',
-		logger: 'log',
-		source: 'src',
-		status: 'sts',
-		error: 'err',
-		warning: 'warn',
-		debug: 'dbg',
-		trace: 'trc'
-	};
-
-	for (const [key, value] of Object.entries(obj)) {
-		// Skip null, undefined, empty strings, empty arrays, empty objects
-		if (
-			value === null ||
-			value === undefined ||
-			value === '' ||
-			(Array.isArray(value) && value.length === 0) ||
-			(typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
-		) {
-			continue;
+			// Ensure we return a valid array or null if empty
+			return filteredArray.length > 0 ? filteredArray : null;
 		}
 
-		// Skip common noisy fields
-		const lowerKey = key.toLowerCase();
-		if (['hostname', 'host', 'pid', 'version', 'v', '_id', 'id'].includes(lowerKey) && typeof value === 'string') {
-			continue;
-		}
+		const result = {};
+		const keyShortcuts = {
+			timestamp: 'ts',
+			message: 'msg',
+			level: 'lvl',
+			severity: 'sev',
+			logger: 'log',
+			source: 'src',
+			status: 'sts',
+			error: 'err',
+			warning: 'warn',
+			debug: 'dbg',
+			trace: 'trc'
+		};
 
-		// Shorten common keys
-		const shortKey = keyShortcuts[lowerKey] || key;
-
-		// Recursively compact nested objects
-		if (typeof value === 'object') {
-			const compacted = compactObjectForJSON(value);
-			if (compacted !== null && (!Array.isArray(compacted) || compacted.length > 0)) {
-				result[shortKey] = compacted;
+		for (const [key, value] of Object.entries(obj)) {
+			// Skip null, undefined, empty strings, empty arrays, empty objects
+			if (
+				value === null ||
+				value === undefined ||
+				value === '' ||
+				(Array.isArray(value) && value.length === 0) ||
+				(typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
+			) {
+				continue;
 			}
-		} else {
-			result[shortKey] = value;
-		}
-	}
 
-	return result;
+			// Skip common noisy fields
+			const lowerKey = key.toLowerCase();
+			if (['hostname', 'host', 'pid', 'version', 'v', '_id', 'id'].includes(lowerKey) && typeof value === 'string') {
+				continue;
+			}
+
+			// Shorten common keys
+			const shortKey = keyShortcuts[lowerKey] || key;
+
+			// Recursively compact nested objects
+			if (typeof value === 'object') {
+				const compacted = compactObjectForJSON(value);
+				if (compacted !== null && (!Array.isArray(compacted) || compacted.length > 0)) {
+					result[shortKey] = compacted;
+				}
+			} else {
+				result[shortKey] = value;
+			}
+		}
+
+		// Return the object, or null if it's empty
+		const keys = Object.keys(result);
+		return keys.length > 0 ? result : null;
+	} catch (error) {
+		console.error('Error compacting object for JSON:', error);
+		// Return the original object if compaction fails
+		return obj;
+	}
 }
 
 export { detectLogFormat };
