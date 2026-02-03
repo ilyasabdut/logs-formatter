@@ -36,12 +36,19 @@
 
 	/**
 	 * Escape HTML to prevent XSS attacks
+	 * Uses regex to be SSR safe and independent of DOM
 	 */
 	function escapeHtml(text) {
-		const div = document.createElement('div');
-		div.textContent = text;
-		return div.innerHTML;
+		if (typeof text !== 'string') return text;
+		return text
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#039;");
 	}
+
+	$: entries = getItemEntries(data);
 
 	/**
 	 * Render value with syntax highlighting
@@ -76,6 +83,9 @@
 	}
 
 	function getItemEntries(data) {
+		if (data === null || data === undefined) {
+			return [];
+		}
 		if (Array.isArray(data)) {
 			return data.map((item, index) => ({ key: index.toString(), value: item, isIndex: true }));
 		} else {
@@ -149,7 +159,7 @@
 				{#if isExpanded}
 					<!-- Expanded view - render nested components recursively -->
 					<div class="ml-2">
-						{#each getItemEntries(data) as entry, index}
+						{#each entries as entry, index}
 							<div class="json-item flex items-start gap-1">
 								{#if entry.isIndex}
 									<!-- For arrays -->
@@ -174,7 +184,7 @@
 										</span>
 									{/if}
 								{/if}
-								{#if index < getItemEntries(data).length - 1}
+								{#if index < entries.length - 1}
 									<span class="text-gray-500">,</span>
 								{/if}
 							</div>
