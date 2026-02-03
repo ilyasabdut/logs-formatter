@@ -43,7 +43,7 @@ describe('Real-world User Scenario Tests', () => {
     
     try {
       // Step 1: User inputs JSON and selects beautify format
-      const result = formatLogs(userJSONInput, 'json', 'pretty');
+      const result = await formatLogs(userJSONInput, 'json', 'pretty');
 
       // Step 2: The OutputArea component tries to parse the result
       // If result.output is already an object (pretty format), we use it directly
@@ -104,7 +104,7 @@ describe('Real-world User Scenario Tests', () => {
       
       try {
         // Simulate the exact user flow
-        const result = formatLogs(testCase, 'json', 'pretty');
+        const result = await formatLogs(testCase, 'json', 'pretty');
 
         // Verify output is valid JSON or object
         const parsedData = typeof result.output === 'string'
@@ -204,7 +204,7 @@ describe('Browser vs Node.js Environment Differences', () => {
     expect(() => parseJSON(JSON.stringify(testData), 'pretty')).not.toThrow();
     
     // Test formatLogs integration (main entry point)
-    expect(() => formatLogs(JSON.stringify(testData), 'json', 'pretty')).not.toThrow();
+    await expect(formatLogs(JSON.stringify(testData), 'json', 'pretty')).resolves.toBeTruthy();
     
     // Test JsonNode rendering (browser component simulation)
     const { container } = render(JsonNode, { data: testData });

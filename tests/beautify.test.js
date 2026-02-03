@@ -79,14 +79,14 @@ describe('JsonNode Component', () => {
 });
 
 describe('FormatLogs Integration', () => {
-  it('should format JSON to pretty format without errors', () => {
-    expect(() => formatLogs(validJSON, 'json', 'pretty')).not.toThrow();
-    const result = formatLogs(validJSON, 'json', 'pretty');
+  it('should format JSON to pretty format without errors', async () => {
+    await expect(formatLogs(validJSON, 'json', 'pretty')).resolves.not.toThrow();
+    const result = await formatLogs(validJSON, 'json', 'pretty');
     expect(result.output).toHaveProperty('level');
     expect(result.output).toHaveProperty('message');
   });
 
-  it('should handle complex nested JSON', () => {
+  it('should handle complex nested JSON', async () => {
     const complexJSON = JSON.stringify({
       level: 'error',
       timestamp: '2025-01-01T10:00:00Z',
@@ -103,13 +103,13 @@ describe('FormatLogs Integration', () => {
       }
     });
 
-    expect(() => formatLogs(complexJSON, 'json', 'pretty')).not.toThrow();
-    const result = formatLogs(complexJSON, 'json', 'pretty');
+    await expect(formatLogs(complexJSON, 'json', 'pretty')).resolves.not.toThrow();
+    const result = await formatLogs(complexJSON, 'json', 'pretty');
     expect(result.output).toHaveProperty('level');
     expect(result.output).toHaveProperty('server');
   });
 
-  it('should handle edge cases', () => {
+  it('should handle edge cases', async () => {
     const edgeCases = [
       '{}',
       '[]',
@@ -117,9 +117,9 @@ describe('FormatLogs Integration', () => {
       '{"level": "info", "deep": {"nested": {"object": {"with": "values"}}}}'
     ];
 
-    edgeCases.forEach(testCase => {
-      expect(() => formatLogs(testCase, 'json', 'pretty')).not.toThrow();
-    });
+    for (const testCase of edgeCases) {
+      await expect(formatLogs(testCase, 'json', 'pretty')).resolves.not.toThrow();
+    }
   });
 });
 

@@ -1,8 +1,4 @@
 import { detectLogFormat } from './detector.js';
-import { parseJSON } from './json.js';
-import { parseWebServerLogs } from './webserver.js';
-import { parseKubernetes } from './kubernetes.js';
-import { parsePlainText } from './plain.js';
 import { encodeToon } from './toon.js';
 
 /**
@@ -10,10 +6,9 @@ import { encodeToon } from './toon.js';
  * @param {string} text - Input log text
  * @param {string} logType - Log type (auto or specific)
  * @param {string} outputFormat - Desired output format
- * @returns {Object} - { output: string, selectedFormat: string, compressionRatio: number }
+ * @returns {Promise<Object>} - { output: string, selectedFormat: string, compressionRatio: number }
  */
-export function formatLogs(text, logType = 'auto', outputFormat = 'auto') {
-
+export async function formatLogs(text, logType = 'auto', outputFormat = 'auto') {
 	if (!text || text.trim().length === 0) {
 		throw new Error('Input cannot be empty');
 	}
@@ -37,20 +32,24 @@ export function formatLogs(text, logType = 'auto', outputFormat = 'auto') {
 		let formatName;
 		switch (detectedType) {
 			case 'json':
+				const { parseJSON } = await import('./json.js');
 				formatted = parseJSON(text, outputFormat);
 				formatName = outputFormat;
 				break;
 			case 'apache':
 			case 'nginx':
+				const { parseWebServerLogs } = await import('./webserver.js');
 				formatted = parseWebServerLogs(text, outputFormat);
 				formatName = outputFormat;
 				break;
 			case 'kubernetes':
+				const { parseKubernetes } = await import('./kubernetes.js');
 				formatted = parseKubernetes(text, outputFormat);
 				formatName = outputFormat;
 				break;
 			case 'plain':
 			default:
+				const { parsePlainText } = await import('./plain.js');
 				formatted = parsePlainText(text, outputFormat);
 				formatName = outputFormat;
 				break;
@@ -311,13 +310,37 @@ function autoFormat(text, detectedType) {
 		throw new Error('Unable to parse input data');
 	}
 
-	// Test all formats and calculate compression ratios
-	// Note: 'pretty' format is excluded - it's for readability, not compression
+	// Optimization: Pre-calculate compacted data since it's used by multiple formats
+	// This avoids traversing the entire object tree multiple times
+	const compactedData = Array.isArray(structuredData)
+		? structuredData.map(item => compactObjectForJSON(item))
+		: compactObjectForJSON(structuredData);
+
+	// Test formats for best compression
+	// Note: 'pretty' format is excluded - it's for readability
+	// Note: 'keyvalue' is excluded - it's usually verbose and rarely offers best compression
 	const formats = [
-		{ name: 'jsonlines', displayName: 'JSON Lines', getOutput: () => formatAsJSONLines(structuredData) },
-		{ name: 'compact', displayName: 'Compact JSON', getOutput: () => formatAsCompact(structuredData) },
-		{ name: 'keyvalue', displayName: 'Key-Value Lines', getOutput: () => formatAsKeyValue(structuredData) },
-		{ name: 'toon', displayName: 'TOON (LLM-Optimized)', getOutput: () => encodeToon(structuredData) }
+		{
+			name: 'jsonlines',
+			displayName: 'JSON Lines',
+			getOutput: () => {
+				if (Array.isArray(compactedData)) {
+					return compactedData.map(item => JSON.stringify(item)).join('\n');
+				} else {
+					return JSON.stringify(compactedData);
+				}
+			}
+		},
+		{
+			name: 'compact',
+			displayName: 'Compact JSON',
+			getOutput: () => JSON.stringify(compactedData)
+		},
+		{
+			name: 'toon',
+			displayName: 'TOON (LLM-Optimized)',
+			getOutput: () => encodeToon(structuredData)
+		}
 	];
 
 	let bestFormat = formats[0];

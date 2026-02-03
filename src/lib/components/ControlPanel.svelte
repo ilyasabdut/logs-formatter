@@ -38,7 +38,7 @@
 	/**
 	 * Format logs
 	 */
-	function handleFormat() {
+	async function handleFormat() {
 		errorMessage.set('');
 
 		if (!$inputLogs || $inputLogs.trim().length === 0) {
@@ -47,7 +47,7 @@
 		}
 
 		try {
-			const result = formatLogs($inputLogs, $logType, $outputFormat);
+			const result = await formatLogs($inputLogs, $logType, $outputFormat);
 			outputLogs.set(result.output);
 			selectedOutputFormat = result.selectedFormat;
 			compressionRatio = result.compressionRatio;
