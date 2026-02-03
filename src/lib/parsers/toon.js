@@ -12,9 +12,6 @@ import { encode } from '@toon-format/toon';
  */
 export function encodeToon(data) {
 	// Debug logging
-	console.log('encodeToon input:', data);
-	console.log('encodeToon input type:', typeof data);
-	console.log('encodeToon isArray:', Array.isArray(data));
 
 	// Handle empty, null, or undefined data
 	if (!data || data === null || data === undefined) {
@@ -24,7 +21,7 @@ export function encodeToon(data) {
 	// Handle empty objects and arrays
 	if (typeof data === 'object') {
 		const keys = Object.keys(data);
-		console.log('encodeToon keys:', keys);
+
 		if (Array.isArray(data) && data.length === 0) {
 			throw new Error('Empty array provided');
 		}
@@ -37,16 +34,16 @@ export function encodeToon(data) {
 		// Handle arrays and objects
 		if (Array.isArray(data)) {
 			const result = encodeArrayToToon(data);
-			console.log('encodeToon array result:', result);
+
 			return result;
 		} else if (typeof data === 'object') {
 			const result = encodeObjectToToon(data);
-			console.log('encodeToon object result:', result);
+
 			return result;
 		} else {
 			// Handle primitives
 			const result = encodePrimitiveToToon(data);
-			console.log('encodeToon primitive result:', result);
+
 			return result;
 		}
 	} catch (error) {
@@ -142,26 +139,23 @@ function encodePrimitiveToToon(value) {
  * @returns {string} - Formatted value
  */
 function formatValue(value) {
-	console.log('formatValue input:', value);
-	console.log('formatValue type:', typeof value);
-
 	// Handle null and undefined
 	if (value === null || value === undefined) {
-		console.log('formatValue: returning empty string for null/undefined');
+
 		return '';
 	}
 
 	// Handle primitives
 	if (typeof value === 'boolean' || typeof value === 'number') {
 		const result = value.toString();
-		console.log('formatValue: returning primitive:', result);
+
 		return result;
 	}
 
 	if (typeof value === 'string') {
 		// Escape commas and newlines in strings
 		const escaped = value.replace(/,/g, '\\,').replace(/\n/g, '\\n');
-		console.log('formatValue: returning escaped string:', escaped);
+
 		return escaped;
 	}
 
@@ -171,7 +165,7 @@ function formatValue(value) {
 			// Special handling for Date objects
 			if (value instanceof Date) {
 				const result = value.toISOString().replace(/,/g, '\\,').replace(/\n/g, '\\n');
-				console.log('formatValue: returning Date:', result);
+
 				return result;
 			}
 
@@ -184,24 +178,24 @@ function formatValue(value) {
 				};
 				const json = JSON.stringify(errorObj);
 				const result = json.replace(/,/g, '\\,').replace(/\n/g, '\\n');
-				console.log('formatValue: returning Error:', result);
+
 				return result;
 			}
 
 			// Handle regular objects and arrays
 			const json = JSON.stringify(value);
 			const result = json.replace(/,/g, '\\,').replace(/\n/g, '\\n');
-			console.log('formatValue: returning JSON:', result);
+
 			return result;
 		} catch (error) {
 			// Fallback for objects that can't be JSON.stringified
 			try {
 				const result = String(value);
-				console.log('formatValue: using String() fallback:', result);
+
 				return result;
 			} catch {
 				const result = '[Unserializable]';
-				console.log('formatValue: using [Unserializable]:', result);
+
 				return result;
 			}
 		}
@@ -209,7 +203,7 @@ function formatValue(value) {
 
 	// Final fallback
 	const result = String(value);
-	console.log('formatValue: using final String() fallback:', result);
+
 	return result;
 }
 

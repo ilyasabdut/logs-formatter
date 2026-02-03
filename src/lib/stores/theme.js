@@ -8,10 +8,19 @@ import { browser } from '$app/environment';
 function getInitialTheme() {
 	if (!browser) return 'light';
 
-	const stored = localStorage.getItem('theme');
-	const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-	
-	return stored || (prefersDark ? 'dark' : 'light');
+	try {
+		const stored = localStorage.getItem('theme');
+		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+		return stored || (prefersDark ? 'dark' : 'light');
+	} catch (e) {
+		// Fallback if localStorage is disabled/inaccessible
+		console.warn('Unable to access localStorage for theme preference');
+		try {
+			return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+		} catch (mediaError) {
+			return 'light';
+		}
+	}
 }
 
 /**
@@ -42,7 +51,11 @@ function createThemeStore() {
 		subscribe,
 		set: (value) => {
 			if (browser) {
-				localStorage.setItem('theme', value);
+				try {
+					localStorage.setItem('theme', value);
+				} catch (e) {
+					console.warn('Unable to save theme preference to localStorage');
+				}
 				// Update document class
 				applyTheme(value);
 			}
@@ -52,7 +65,11 @@ function createThemeStore() {
 			update((current) => {
 				const newTheme = current === 'light' ? 'dark' : 'light';
 				if (browser) {
-					localStorage.setItem('theme', newTheme);
+					try {
+						localStorage.setItem('theme', newTheme);
+					} catch (e) {
+						console.warn('Unable to save theme preference to localStorage');
+					}
 					// Update document class
 					applyTheme(newTheme);
 				}

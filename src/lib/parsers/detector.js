@@ -52,10 +52,9 @@ export function detectLogFormat(text) {
 		const cleaned = stripComments(text.trim());
 		// Try to parse without sanitization first (most JSON is valid as-is)
 		JSON.parse(cleaned);
-		console.log('✅ Detected as JSON (valid parse)');
+
 		return 'json';
 	} catch (jsonError) {
-		console.log('⚠️ JSON parse failed:', jsonError.message);
 		// If full parse fails, check if it's JSON Lines (one JSON object per line)
 		if (firstNonCommentLine.startsWith('{') || firstNonCommentLine.startsWith('[')) {
 			const jsonLineCount = nonCommentLines.slice(0, Math.min(10, nonCommentLines.length)).filter((line) => {
@@ -108,6 +107,6 @@ export function detectLogFormat(text) {
 	}
 
 	// Default to plain text
-	console.log('📝 Detected as plain text (default fallback)');
+
 	return 'plain';
 }

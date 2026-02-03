@@ -13,7 +13,6 @@ import { encodeToon } from './toon.js';
  * @returns {Object} - { output: string, selectedFormat: string, compressionRatio: number }
  */
 export function formatLogs(text, logType = 'auto', outputFormat = 'auto') {
-	console.log('formatLogs called:', { text: text?.substring(0, 100), logType, outputFormat });
 
 	if (!text || text.trim().length === 0) {
 		throw new Error('Input cannot be empty');
@@ -21,7 +20,6 @@ export function formatLogs(text, logType = 'auto', outputFormat = 'auto') {
 
 	// Detect log format if set to auto
 	const detectedType = logType === 'auto' ? detectLogFormat(text) : logType;
-	console.log('detectedType:', detectedType);
 
 	try {
 		// Handle auto mode with smart format selection
@@ -85,8 +83,6 @@ function calculateCompression(original, formatted) {
  * @returns {Object} - { output: string, selectedFormat: string, compressionRatio: number }
  */
 function formatToToon(text, detectedType) {
-	console.log('formatToToon input:', text.substring(0, 200));
-	console.log('formatToToon detectedType:', detectedType);
 
 	// Parse to structured data first
 	let structuredData;
@@ -108,11 +104,9 @@ function formatToToon(text, detectedType) {
 			break;
 	}
 
-	console.log('formatToToon structuredData:', structuredData);
 
 	// Convert structured data to TOON
 	const output = encodeToon(structuredData);
-	console.log('formatToToon output:', output);
 
 	return {
 		output,
