@@ -1,160 +1,101 @@
 <script>
-	export let data = null;
-	export let keyName = null;
-	export let level = 0;
+    import { theme } from '$lib/utils/jsonTheme.js';
+    export let data = null;
+    export let keyName = null;
+    export let level = 0;
+    export let maxDepth = 10;
 
-	let isExpanded = true;
-	let hasChildren = false;
+    const CHUNK_SIZE = 50;
+    let visibleItems = CHUNK_SIZE;
 
-	// Check if data has children (objects or arrays)
-	$: {
-		hasChildren = data && typeof data === 'object' &&
-			((Array.isArray(data) && data.length > 0) ||
-			(!Array.isArray(data) && Object.keys(data).length > 0));
-	}
+    // Start collapsed if deeper than maxDepth
+    let isExpanded = level <= maxDepth;
+    let hasChildren = false;
 
-	// Auto-expand objects with few children, collapse large ones
-	$: {
-		if (hasChildren) {
-			if (Array.isArray(data)) {
-				isExpanded = data.length <= 3;
-			} else {
-				isExpanded = Object.keys(data).length <= 3;
-			}
-		}
-	}
+    // Check if data has children (objects or arrays)
+    $: {
+        hasChildren = data && typeof data === 'object' &&
+            ((Array.isArray(data) && data.length > 0) ||
+            (!Array.isArray(data) && Object.keys(data).length > 0));
+    }
 
-	// Get opening and closing brackets
-	$: openingBracket = Array.isArray(data) ? '[' : '{';
-	$: closingBracket = Array.isArray(data) ? ']' : '}';
+    // Auto-expand objects with few children, collapse large ones
+    // Only apply auto-expand logic if we are within maxDepth
+    $: {
+        if (hasChildren && level <= maxDepth) {
+            if (Array.isArray(data)) {
+                isExpanded = data.length <= 3;
+            } else {
+                isExpanded = Object.keys(data).length <= 3;
+            }
+        }
+    }
 
-	function toggleExpand() {
-		if (hasChildren) {
-			isExpanded = !isExpanded;
-		}
-	}
+    // Get opening and closing brackets
+    $: openingBracket = Array.isArray(data) ? '[' : '{';
+    $: closingBracket = Array.isArray(data) ? ']' : '}';
 
-	/**
-	 * Escape HTML to prevent XSS attacks
-	 * Uses regex to be SSR safe and independent of DOM
-	 */
-	function escapeHtml(text) {
-		if (typeof text !== 'string') return text;
-		return text
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;")
-			.replace(/'/g, "&#039;");
-	}
+    function toggleExpand() {
+        if (hasChildren) {
+            isExpanded = !isExpanded;
+        }
+    }
 
-	$: entries = getItemEntries(data);
+    function showMore() {
+        visibleItems += CHUNK_SIZE;
+    }
 
-	/**
-	 * Render value with syntax highlighting
-	 */
-	function renderValue(value) {
-		if (value === null) {
-			return '<span class="text-gray-500 dark:text-gray-400 italic">null</span>';
-		}
-		if (typeof value === 'string') {
-			return `<span class="text-green-600 dark:text-green-400">"${escapeHtml(value)}"</span>`;
-		}
-		if (typeof value === 'number') {
-			return `<span class="text-blue-600 dark:text-blue-400">${value}</span>`;
-		}
-		if (typeof value === 'boolean') {
-			return `<span class="text-orange-600 dark:text-orange-400">${value}</span>`;
-		}
-		if (Array.isArray(value)) {
-			return `<span class="text-purple-600 dark:text-purple-400">[${value.length} items]</span>`;
-		}
-		if (typeof value === 'object') {
-			const keys = Object.keys(value);
-			return `<span class="text-purple-600 dark:text-purple-400">{${keys.length} keys}</span>`;
-		}
-		return escapeHtml(JSON.stringify(value));
-	}
+    // Compute entries once
+    $: allEntries = getItemEntries(data);
+    // Slice entries for pagination
+    $: entries = allEntries.slice(0, visibleItems);
+    $: remainingCount = Math.max(0, allEntries.length - visibleItems);
 
-	function getItemCount(data) {
-		if (Array.isArray(data)) return data.length;
-		if (typeof data === 'object') return Object.keys(data).length;
-		return 0;
-	}
+    function getItemCount(data) {
+        if (Array.isArray(data)) return data.length;
+        if (typeof data === 'object') return Object.keys(data).length;
+        return 0;
+    }
 
-	function getItemEntries(data) {
-		if (data === null || data === undefined) {
-			return [];
-		}
-		if (Array.isArray(data)) {
-			return data.map((item, index) => ({ key: index.toString(), value: item, isIndex: true }));
-		} else {
-			return Object.entries(data).map(([key, value]) => ({ key, value, isIndex: false }));
-		}
-	}
+    function getItemEntries(data) {
+        if (data === null || data === undefined) {
+            return [];
+        }
+        if (Array.isArray(data)) {
+            return data.map((item, index) => ({ key: index.toString(), value: item, isIndex: true }));
+        } else {
+            return Object.entries(data).map(([key, value]) => ({ key, value, isIndex: false }));
+        }
+    }
 
-	function hasNestedObjects(data) {
-		if (!data || typeof data !== 'object') return false;
-		
-		if (Array.isArray(data)) {
-			return data.some(item => item && typeof item === 'object');
-		} else {
-			return Object.values(data).some(value => value && typeof value === 'object');
-		}
-	}
+    function hasNestedObjects(data) {
+        if (!data || typeof data !== 'object') return false;
 
-	// Render nested structure inline
-	function renderNestedStructure(data, indent = 2) {
-		const indentStr = ' '.repeat(indent);
-		const childIndent = indent + 2;
-		
-		if (Array.isArray(data)) {
-			if (data.length === 0) return '[]';
-			
-			const items = data.map(item => {
-				if (item && typeof item === 'object') {
-					return indentStr + renderNestedStructure(item, childIndent);
-				} else {
-					return indentStr + renderValue(item);
-				}
-			});
-			
-			return '[\n' + items.join(',\n') + '\n' + ' '.repeat(indent) + ']';
-		} else {
-			const keys = Object.keys(data);
-			if (keys.length === 0) return '{}';
-			
-			const properties = keys.map(key => {
-				const value = data[key];
-				if (value && typeof value === 'object') {
-					return indentStr + `"${key}": ${renderNestedStructure(value, childIndent)}`;
-				} else {
-					return indentStr + `"${key}": ${renderValue(value)}`;
-				}
-			});
-			
-			return '{\n' + properties.join(',\n') + '\n' + ' '.repeat(indent) + '}';
-		}
-	}
+        if (Array.isArray(data)) {
+            return data.some(item => item && typeof item === 'object');
+        } else {
+            return Object.values(data).some(value => value && typeof value === 'object');
+        }
+    }
 </script>
 
 {#if data !== null}
 	<div class="json-node" style="margin-left: {level * 16}px;">
 		{#if keyName !== null}
-			<span class="text-red-600 dark:text-red-400 font-mono">"{keyName}"</span>
-			<span class="text-gray-500 mx-1">:</span>
+			<span class="{theme.colors.key}">"{keyName}"</span>
+			<span class="{theme.colors.punctuation} mx-1">:</span>
 		{/if}
 
 		{#if hasChildren}
 			<!-- Expandable/Collapsible Object or Array -->
 			<button
 				type="button"
-				class="cursor-pointer select-none text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded px-1 py-0.5 -mx-1 transition-colors"
+				class="{theme.colors.button.base} {theme.colors.button.hover}"
 				on:click={toggleExpand}
 				on:keydown={(e) => e.key === 'Enter' && toggleExpand()}
 				tabindex="0"
 			>
-				<span class="text-gray-600 dark:text-gray-400 font-mono">{openingBracket}</span>
+				<span class="{theme.colors.bracket}">{openingBracket}</span>
 
 				{#if isExpanded}
 					<!-- Expanded view - render nested components recursively -->
@@ -165,45 +106,73 @@
 									<!-- For arrays -->
 									{#if entry.value && typeof entry.value === 'object'}
 										<!-- Recursively render nested JsonNode -->
-										<svelte:self data={entry.value} level={level + 1} />
+										<svelte:self data={entry.value} level={level + 1} maxDepth={maxDepth} />
 									{:else}
-										<span class="font-mono">
-											{@html renderValue(entry.value)}
+										<span class="{theme.fonts.mono}">
+                                            {#if entry.value === null}
+                                                <span class="{theme.colors.null}">null</span>
+                                            {:else if typeof entry.value === 'string'}
+                                                <span class="{theme.colors.string}">"{entry.value}"</span>
+                                            {:else if typeof entry.value === 'number'}
+                                                <span class="{theme.colors.number}">{entry.value}</span>
+                                            {:else if typeof entry.value === 'boolean'}
+                                                <span class="{theme.colors.boolean}">{entry.value}</span>
+                                            {/if}
 										</span>
 									{/if}
 								{:else}
 									<!-- For objects -->
 									{#if entry.value && typeof entry.value === 'object'}
 										<!-- Recursively render nested JsonNode -->
-										<svelte:self data={entry.value} keyName={entry.key} level={level + 1} />
+										<svelte:self data={entry.value} keyName={entry.key} level={level + 1} maxDepth={maxDepth} />
 									{:else}
-										<span class="text-red-600 dark:text-red-400 font-mono">"{entry.key}"</span>
-										<span class="text-gray-500 mx-1">:</span>
-										<span class="font-mono">
-											{@html renderValue(entry.value)}
+										<span class="{theme.colors.key}">"{entry.key}"</span>
+										<span class="{theme.colors.punctuation} mx-1">:</span>
+										<span class="{theme.fonts.mono}">
+                                            {#if entry.value === null}
+                                                <span class="{theme.colors.null}">null</span>
+                                            {:else if typeof entry.value === 'string'}
+                                                <span class="{theme.colors.string}">"{entry.value}"</span>
+                                            {:else if typeof entry.value === 'number'}
+                                                <span class="{theme.colors.number}">{entry.value}</span>
+                                            {:else if typeof entry.value === 'boolean'}
+                                                <span class="{theme.colors.boolean}">{entry.value}</span>
+                                            {/if}
 										</span>
 									{/if}
 								{/if}
-								{#if index < entries.length - 1}
-									<span class="text-gray-500">,</span>
+								{#if index < entries.length - 1 || remainingCount > 0}
+									<span class="{theme.colors.punctuation}">,</span>
 								{/if}
 							</div>
 						{/each}
+
+						{#if remainingCount > 0}
+							<div class="json-item">
+								<button
+									type="button"
+									class="{theme.colors.button.showMore}"
+									on:click|stopPropagation={showMore}
+								>
+									Show {Math.min(remainingCount, CHUNK_SIZE)} more items ({remainingCount} remaining)
+								</button>
+							</div>
+						{/if}
 					</div>
 				{:else}
 					<!-- Collapsed view -->
-					<span class="text-purple-600 dark:text-purple-400 ml-1 font-mono">
-						{getItemCount(data)} {Array.isArray(data) ? 'items...' : 'keys...'}
+					<span class="{theme.colors.meta}">
+						{getItemCount(data)} {Array.isArray(data) ? 'items' : 'keys'}...
 						{#if hasNestedObjects(data)}
-							<span class="text-blue-500 dark:text-blue-400"> (nested)</span>
+							<span class="{theme.colors.metaNested}"> (nested)</span>
 						{/if}
 					</span>
 				{/if}
 
-				<span class="text-gray-600 dark:text-gray-400 font-mono">{closingBracket}</span>
+				<span class="{theme.colors.bracket}">{closingBracket}</span>
 
 				<!-- Toggle icon -->
-				<span class="inline-block w-4 h-4 ml-1 text-gray-500">
+				<span class="inline-block w-4 h-4 ml-1 {theme.colors.punctuation}">
 					{#if hasChildren}
 						{#if isExpanded}
 							<span class="text-xs">▼</span>
@@ -214,9 +183,21 @@
 				</span>
 			</button>
 		{:else}
-			<!-- Primitive value -->
-			<span class="font-mono">
-				{@html renderValue(data)}
+			<!-- Primitive or Empty Value -->
+			<span class="{theme.fonts.mono}">
+                {#if data === null}
+                    <span class="{theme.colors.null}">null</span>
+                {:else if Array.isArray(data)}
+                    <span class="{theme.colors.meta}">[{data.length} items]</span>
+                {:else if typeof data === 'object'}
+                     <span class="{theme.colors.meta}">{"{"}{Object.keys(data).length} keys{"}"}</span>
+                {:else if typeof data === 'string'}
+                    <span class="{theme.colors.string}">"{data}"</span>
+                {:else if typeof data === 'number'}
+                    <span class="{theme.colors.number}">{data}</span>
+                {:else if typeof data === 'boolean'}
+                    <span class="{theme.colors.boolean}">{data}</span>
+                {/if}
 			</span>
 		{/if}
 	</div>
@@ -236,22 +217,5 @@
 		gap: 0.25rem;
 		margin-bottom: 0.125rem;
 	}
-
-	.nested-structure {
-		margin-left: 0.5rem;
-		padding: 0.5rem;
-		background-color: rgba(243, 244, 246, 0.3);
-		border-radius: 0.25rem;
-		border: 1px solid rgba(156, 163, 175, 0.3);
-		margin-top: 0.125rem;
-		max-width: 100%;
-	}
-
-	.nested-structure pre {
-		margin: 0;
-		white-space: pre-wrap;
-		word-break: break-word;
-		font-size: 0.75rem;
-		line-height: 1.3;
-	}
 </style>
+
