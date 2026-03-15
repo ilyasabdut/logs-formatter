@@ -4,22 +4,46 @@
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		
+
 		<!-- Prevent theme flash by setting initial theme before app loads -->
 		<script>
 			(function() {
-				const stored = localStorage.getItem('theme');
-				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-				const theme = stored || (prefersDark ? 'dark' : 'light');
-				
-				if (theme === 'dark') {
-					document.documentElement.classList.add('dark');
+				const isExtension = typeof chrome !== 'undefined' && chrome.storage;
+
+				const applyTheme = (theme) => {
+					if (theme === 'dark') {
+						document.documentElement.classList.add('dark');
+					} else {
+						document.documentElement.classList.remove('dark');
+					}
+				};
+
+				if (isExtension) {
+					// Chrome extension: use chrome.storage.local
+					chrome.storage.local.get(['theme'], (result) => {
+						const stored = result.theme;
+						if (stored) {
+							applyTheme(stored);
+						} else {
+							const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+							applyTheme(prefersDark ? 'dark' : 'light');
+						}
+					});
 				} else {
-					document.documentElement.classList.remove('dark');
+					// Fallback to localStorage for non-extension builds
+					try {
+						const stored = localStorage.getItem('theme');
+						const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+						const theme = stored || (prefersDark ? 'dark' : 'light');
+						applyTheme(theme);
+					} catch (e) {
+						const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+						applyTheme(prefersDark ? 'dark' : 'light');
+					}
 				}
 			})();
 		</script>
-		
+
 		<style>
 			html, body {
 				width: 800px;
