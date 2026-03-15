@@ -44,7 +44,7 @@ function applyTheme(themeValue) {
  */
 function createThemeStore() {
 	// Start with light theme, will update asynchronously
-	const { subscribe, set, update } = writable('light');
+	const { subscribe, set } = writable('light');
 
 	// Initialize theme asynchronously
 	if (browser) {
