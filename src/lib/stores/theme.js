@@ -1,20 +1,22 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import { getStorage, setStorage } from '$lib/utils/chromeStorage.js';
 
 /**
- * Get initial theme from localStorage or system preference
- * Uses the same logic as the HTML script for consistency
+ * Get initial theme from chrome.storage.local or system preference
+ * Uses async storage with fallback for non-extension builds
  */
-function getInitialTheme() {
+async function getInitialTheme() {
 	if (!browser) return 'light';
 
 	try {
-		const stored = localStorage.getItem('theme');
+		const stored = await getStorage('theme', null);
+		if (stored) return stored;
+
 		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-		return stored || (prefersDark ? 'dark' : 'light');
+		return prefersDark ? 'dark' : 'light';
 	} catch (e) {
-		// Fallback if localStorage is disabled/inaccessible
-		console.warn('Unable to access localStorage for theme preference');
+		console.warn('Unable to access storage for theme preference:', e);
 		try {
 			return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 		} catch (mediaError) {
@@ -28,7 +30,7 @@ function getInitialTheme() {
  */
 function applyTheme(themeValue) {
 	if (!browser) return;
-	
+
 	if (themeValue === 'dark') {
 		document.documentElement.classList.add('dark');
 	} else {
@@ -37,44 +39,46 @@ function applyTheme(themeValue) {
 }
 
 /**
- * Theme store with localStorage persistence
+ * Theme store with chrome.storage.local persistence
+ * Falls back to localStorage for non-extension builds
  */
 function createThemeStore() {
-	const initialTheme = getInitialTheme();
-	
-	// Apply theme immediately to prevent FOUC
-	applyTheme(initialTheme);
-	
-	const { subscribe, set, update } = writable(initialTheme);
+	// Start with light theme, will update asynchronously
+	const { subscribe, set, update } = writable('light');
+
+	// Initialize theme asynchronously
+	if (browser) {
+		getInitialTheme().then(initialTheme => {
+			applyTheme(initialTheme);
+			set(initialTheme);
+		});
+	}
 
 	return {
 		subscribe,
-		set: (value) => {
+		set: async (value) => {
 			if (browser) {
 				try {
-					localStorage.setItem('theme', value);
+					await setStorage('theme', value);
 				} catch (e) {
-					console.warn('Unable to save theme preference to localStorage');
+					console.warn('Unable to save theme preference:', e);
 				}
-				// Update document class
 				applyTheme(value);
 			}
 			set(value);
 		},
-		toggle: () => {
-			update((current) => {
-				const newTheme = current === 'light' ? 'dark' : 'light';
-				if (browser) {
-					try {
-						localStorage.setItem('theme', newTheme);
-					} catch (e) {
-						console.warn('Unable to save theme preference to localStorage');
-					}
-					// Update document class
-					applyTheme(newTheme);
+		toggle: async () => {
+			const current = get(theme);
+			const newTheme = current === 'light' ? 'dark' : 'light';
+			if (browser) {
+				try {
+					await setStorage('theme', newTheme);
+				} catch (e) {
+					console.warn('Unable to save theme preference:', e);
 				}
-				return newTheme;
-			});
+				applyTheme(newTheme);
+			}
+			set(newTheme);
 		}
 	};
 }
