@@ -12,6 +12,7 @@ All planned features have been successfully implemented, plus **TOON integration
 - **Intelligent Auto-Detection**: Automatically detects log format with manual override option
 - **Smart Auto Mode**: Automatically selects the format with the best compression ratio
 - **Multiple Output Formats**: TOON (LLM-Optimized), JSON Lines, Key-Value Lines, and Compact JSON
+- **JSON Viewer**: Beautiful collapsible JSON with 8 color themes, clickable URLs, and syntax highlighting
 - **Privacy-First**: 100% client-side processing
 - **Fast & Responsive**: Built with SvelteKit and Tailwind CSS
 - **Dark Mode**: Toggle between light and dark themes with persistent preference
@@ -275,7 +276,16 @@ make docker-down  # Stop Docker container
 make docker-logs  # View container logs
 ```
 
-## 🆕 Latest Features (v2.1)
+## 🆕 Latest Features (v2.2)
+
+### 🎨 JSON Viewer (Inspired by json-viewer)
+- **8 Color Themes**: Default, Monokai, Dracula, Nord, GitHub, Solarized, Atom One, VS Code
+- **Collapsible Nodes**: Click to expand/collapse JSON objects and arrays
+- **Expand/Collapse All**: Quick controls for large JSON structures
+- **Clickable URLs**: HTTP/HTTPS links in JSON values are clickable
+- **Line Numbers**: Toggle line numbers for easier debugging
+- **Syntax Highlighting**: Beautiful colors for strings, numbers, booleans, null, keys, and brackets
+- **Theme Persistence**: Your theme preference is saved automatically
 
 ### 🤖 Smart Auto Mode
 The **"Auto (Best Compression)"** mode automatically:
@@ -326,12 +336,14 @@ Auto Mode: ✅ Correctly selected TOON as optimal format
    - Batch processing (multiple file uploads)
    - Presets for common log types (Docker, Kubernetes, AWS CloudWatch, Datadog)
 
-4. **Beautified JSON with Collapsible Formatting** (IN DEVELOPMENT):
-   - Pretty-printed JSON with proper indentation
-   - Interactive collapsible sections with click-to-expand/collapse
-   - Syntax highlighting (strings in green, numbers in blue, etc.)
-   - Smart auto-collapse for large objects
-   - Visual indicators with expand (▶) and collapse (▼) arrows
+4. **JSON Viewer Enhancements** (COMPLETED ✅):
+   - Pretty-printed JSON with proper indentation ✅
+   - Interactive collapsible sections with click-to-expand/collapse ✅
+   - Syntax highlighting (strings in green, numbers in blue, etc.) ✅
+   - 8 color themes for customization ✅
+   - Clickable URLs ✅
+   - Expand/Collapse All controls ✅
+   - Line numbers toggle ✅
 
 ### Priority: Low
 4. **UX Enhancements**:
@@ -375,6 +387,10 @@ cd build && zip -r ../logs-formatter-extension.zip .
 
 Upload `logs-formatter-extension.zip` to the Chrome Web Store.
 
+**Note:** Delete any old `logs-formatter-extension-v1.0.0.zip` files - they are outdated and lack CSP fixes.
+
 ## 🙏 Acknowledgments
 
-Special thanks to the creators of **TOON (Token-Oriented Object Notation)** for developing this amazing LLM-optimized format that inspired this project's latest features.
+Special thanks to:
+- **TOON (Token-Oriented Object Notation)** for developing this amazing LLM-optimized format that inspired this project's features
+- **json-viewer Chrome extension** by Tulios for inspiring the JSON viewer features (collapsible nodes, multiple themes, clickable URLs, syntax highlighting)

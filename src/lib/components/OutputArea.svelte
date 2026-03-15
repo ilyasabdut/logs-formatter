@@ -2,10 +2,28 @@
 	import { outputLogs, inputLogs } from '$lib/stores/app.js';
 	import MetricsDisplay from '$lib/components/MetricsDisplay.svelte';
 	import JsonNode from '$lib/components/JsonNode.svelte';
+	import JsonThemeSelector from '$lib/components/JsonThemeSelector.svelte';
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
 
 	let copyButtonText = 'Copy to Clipboard';
 	let copyTimeout;
 	let parsedData = null;
+	let showLineNumbers = false;
+
+	// Event dispatcher for expand/collapse all
+	function expandAll() {
+		dispatch('expandAll');
+	}
+
+	function collapseAll() {
+		dispatch('collapseAll');
+	}
+
+	function toggleLineNumbers() {
+		showLineNumbers = !showLineNumbers;
+	}
 
 	/**
 	 * Copy output to clipboard
@@ -64,8 +82,8 @@
 
 <div class="relative">
 	{#if $outputLogs}
-		<div class="flex items-center justify-between mb-4">
-			<div class="flex items-center space-x-2">
+		<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+			<div class="flex items-center flex-wrap gap-2">
 				<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
 				<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Formatted Output Ready</span>
 				{#if parsedData}
@@ -81,27 +99,75 @@
 					</span>
 				{/if}
 			</div>
-			<button
-				type="button"
-				on:click={handleCopy}
-				class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm hover:shadow-md"
-				aria-label="Copy formatted output to clipboard"
-			>
-				{#if copyButtonText === 'Copied!'}
-					<svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-					</svg>
-				{:else if copyButtonText === 'Failed to copy'}
-					<svg class="w-4 h-4 mr-2 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-					</svg>
-				{:else}
-					<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-					</svg>
+
+			<!-- Control buttons -->
+			<div class="flex items-center flex-wrap gap-2">
+				{#if parsedData}
+					<!-- Expand/Collapse All -->
+					<div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+						<button
+							type="button"
+							on:click={expandAll}
+							class="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-r border-gray-200 dark:border-gray-600"
+							title="Expand all nodes"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7"/>
+							</svg>
+						</button>
+						<button
+							type="button"
+							on:click={collapseAll}
+							class="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+							title="Collapse all nodes"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7"/>
+							</svg>
+						</button>
+					</div>
+
+					<!-- Line Numbers Toggle -->
+					<button
+						type="button"
+						on:click={toggleLineNumbers}
+						class="inline-flex items-center px-3 py-2 text-xs font-medium {showLineNumbers
+							? 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
+							: 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600'} border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+						>
+						<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+						</svg>
+						<span class="hidden sm:inline">Line Numbers</span>
+					</button>
+
+					<!-- JSON Theme Selector -->
+					<JsonThemeSelector />
 				{/if}
-				{copyButtonText}
-			</button>
+
+				<!-- Copy Button -->
+				<button
+					type="button"
+					on:click={handleCopy}
+					class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm hover:shadow-md"
+					aria-label="Copy formatted output to clipboard"
+				>
+					{#if copyButtonText === 'Copied!'}
+						<svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+						</svg>
+					{:else if copyButtonText === 'Failed to copy'}
+						<svg class="w-4 h-4 mr-2 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+						</svg>
+					{:else}
+						<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+						</svg>
+					{/if}
+					{copyButtonText}
+				</button>
+			</div>
 		</div>
 	{/if}
 

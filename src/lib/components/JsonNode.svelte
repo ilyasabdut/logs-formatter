@@ -1,5 +1,5 @@
 <script>
-    import { theme } from '$lib/utils/jsonTheme.js';
+    import { jsonThemeStore } from '$lib/stores/jsonTheme.js';
     export let data = null;
     export let keyName = null;
     export let level = 0;
@@ -7,6 +7,9 @@
 
     const CHUNK_SIZE = 50;
     let visibleItems = CHUNK_SIZE;
+
+    // Get current theme from store
+    $: theme = $jsonThemeStore || jsonThemeStore.getCurrentTheme();
 
     // Start collapsed if deeper than maxDepth
     let isExpanded = level <= maxDepth;
@@ -77,6 +80,17 @@
             return Object.values(data).some(value => value && typeof value === 'object');
         }
     }
+
+    // Check if a string value is a URL
+    function isUrl(str) {
+        if (typeof str !== 'string') return false;
+        try {
+            const url = new URL(str);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+       	} catch {
+        	return false;
+        }
+    }
 </script>
 
 {#if data !== null}
@@ -112,7 +126,19 @@
                                             {#if entry.value === null}
                                                 <span class="{theme.colors.null}">null</span>
                                             {:else if typeof entry.value === 'string'}
-                                                <span class="{theme.colors.string}">"{entry.value}"</span>
+                                                {#if isUrl(entry.value)}
+                                                	<a
+                                                		href={entry.value}
+                                                		target="_blank"
+                                                		rel="noopener noreferrer"
+                                                		class="{theme.colors.string} underline hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                                                		title="Click to open link"
+                                                	>
+                                                		"{entry.value}"
+                                                	</a>
+                                                {:else}
+                                                	<span class="{theme.colors.string}">"{entry.value}"</span>
+                                                {/if}
                                             {:else if typeof entry.value === 'number'}
                                                 <span class="{theme.colors.number}">{entry.value}</span>
                                             {:else if typeof entry.value === 'boolean'}
@@ -132,7 +158,19 @@
                                             {#if entry.value === null}
                                                 <span class="{theme.colors.null}">null</span>
                                             {:else if typeof entry.value === 'string'}
-                                                <span class="{theme.colors.string}">"{entry.value}"</span>
+                                                {#if isUrl(entry.value)}
+                                                	<a
+                                                		href={entry.value}
+                                                		target="_blank"
+                                                		rel="noopener noreferrer"
+                                                		class="{theme.colors.string} underline hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                                                		title="Click to open link"
+                                                	>
+                                                		"{entry.value}"
+                                                	</a>
+                                                {:else}
+                                                	<span class="{theme.colors.string}">"{entry.value}"</span>
+                                                {/if}
                                             {:else if typeof entry.value === 'number'}
                                                 <span class="{theme.colors.number}">{entry.value}</span>
                                             {:else if typeof entry.value === 'boolean'}

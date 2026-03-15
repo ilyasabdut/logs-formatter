@@ -20,7 +20,7 @@ dev:
 	bun run dev
 
 build:
-	bun run build
+	./scripts/build-extension.sh
 
 ext-build:
 	./scripts/build-extension.sh
