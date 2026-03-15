@@ -877,7 +877,7 @@ Expected: `permissions: ["storage"]` in manifest
 grep -A 3 "chrome_url_overrides" build/manifest.json
 ```
 
-Expected: `chrome_url_overrides.newtab: "index.html"` in manifest
+Expected: `chrome_url_overrides.service_worker: "background.js"` in manifest
 
 ---
 
