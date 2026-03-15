@@ -160,24 +160,6 @@
 				</div>
 			</div>
 
-			<!-- Bottom Section -->
-			<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-				<div class="flex flex-col md:flex-row justify-between items-center">
-					<div class="flex items-center space-x-6 text-xs text-gray-500 dark:text-gray-500">
-						<span>© 2024 Log Formatter Platform</span>
-						<span>•</span>
-						<span>Built with SvelteKit & Tailwind CSS</span>
-						<span>•</span>
-						<span>Open Source Project</span>
-					</div>
-					<div class="flex items-center space-x-4 mt-4 md:mt-0">
-						<div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-500">
-							<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-							<span>Powered by Advanced AI</span>
-						</div>
-					</div>
-				</div>
-			</div>
 		</div>
 	</footer>
 </div>
