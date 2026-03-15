@@ -8,6 +8,14 @@ node_modules/
 # Bun
 bun.lockb
 
+# Chrome extension build artifacts
+*.crx
+*.pem
+*.zip
+
+# npm (project uses Bun)
+package-lock.json
+
 # General
 .env
 .env.*

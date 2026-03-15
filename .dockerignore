@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Claude AI
+.claude/
+
+# Testing
+coverage/
+
+# Logs
+*.log
+
+# Environment
+.env*
+!.env.example
+
+# Build artifacts
+build/
+*.crx
+*.pem
+*.zip
+
+# SvelteKit
+.svelte-kit/
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+
+# Build tools
+Makefile
+
+# Documentation
+README.md
