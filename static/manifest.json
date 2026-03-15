@@ -4,14 +4,13 @@
 	"version": "1.0.0",
 	"description": "Privacy-first log formatter and optimizer.",
 	"action": {
-		"default_popup": "index.html",
 		"default_icon": "favicon.png"
 	},
-	"chrome_url_overrides": {
-		"newtab": "index.html"
+	"background": {
+		"service_worker": "background.js"
 	},
 	"icons": {
 		"128": "favicon.png"
 	},
-	"permissions": ["storage"]
+	"permissions": ["storage", "tabs"]
 }

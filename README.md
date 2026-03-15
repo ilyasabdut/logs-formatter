@@ -364,7 +364,7 @@ MIT
 4. Click "Load unpacked"
 5. Select the `build/` directory
 
-The extension will now override your new tab page with Log Formatter.
+**To use:** Click the extension icon to open Log Formatter in a new tab.
 
 ### Build for Distribution
 
