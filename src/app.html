@@ -18,27 +18,28 @@
 					}
 				};
 
+				// Apply system preference IMMEDIATELY (synchronous)
+				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				applyTheme(prefersDark ? 'dark' : 'light');
+
+				// Then try to get stored preference and update
 				if (isExtension) {
-					// Chrome extension: use chrome.storage.local
+					// Chrome extension: use chrome.storage.local (async)
 					chrome.storage.local.get(['theme'], (result) => {
 						const stored = result.theme;
 						if (stored) {
 							applyTheme(stored);
-						} else {
-							const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-							applyTheme(prefersDark ? 'dark' : 'light');
 						}
 					});
 				} else {
 					// Fallback to localStorage for non-extension builds
 					try {
 						const stored = localStorage.getItem('theme');
-						const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-						const theme = stored || (prefersDark ? 'dark' : 'light');
-						applyTheme(theme);
+						if (stored) {
+							applyTheme(stored);
+						}
 					} catch (e) {
-						const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-						applyTheme(prefersDark ? 'dark' : 'light');
+						// System preference already applied above
 					}
 				}
 			})();
