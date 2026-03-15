@@ -354,6 +354,27 @@ Auto Mode: ✅ Correctly selected TOON as optimal format
 
 MIT
 
+## Chrome Extension Installation
+
+### Load Unpacked (Development)
+
+1. Run `bun run build`
+2. Open `chrome://extensions/`
+3. Enable "Developer mode" (top right)
+4. Click "Load unpacked"
+5. Select the `build/` directory
+
+The extension will now override your new tab page with Log Formatter.
+
+### Build for Distribution
+
+```bash
+bun run build
+cd build && zip -r ../logs-formatter-extension.zip .
+```
+
+Upload `logs-formatter-extension.zip` to the Chrome Web Store.
+
 ## 🙏 Acknowledgments
 
 Special thanks to the creators of **TOON (Token-Oriented Object Notation)** for developing this amazing LLM-optimized format that inspired this project's latest features.
